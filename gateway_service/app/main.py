@@ -4,9 +4,8 @@ from ariadne import QueryType, make_executable_schema, gql
 from ariadne.asgi import GraphQL
 import grpc
 import sys
-sys.path.append("../../products_service/app")
-from products_pb2 import ProductRequest, ListProductsRequest
-from products_pb2_grpc import ProductsStub
+from grpc.products_pb2 import ProductRequest, ListProductsRequest
+from grpc.products_pb2_grpc import ProductsStub
 
 # GraphQL type definitions
 

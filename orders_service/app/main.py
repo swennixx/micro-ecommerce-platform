@@ -1,9 +1,9 @@
 
 from fastapi import FastAPI, Depends, HTTPException, status, Request
 from sqlalchemy.ext.asyncio import AsyncSession
-from . import models, schemas, crud, deps
-from .products_grpc_client import ProductsGrpcClient
-from .database import engine
+from app import models, schemas, crud, deps
+from app.products_grpc_client import ProductsGrpcClient
+from app.database import engine
 from prometheus_client import Counter, generate_latest, CONTENT_TYPE_LATEST
 from fastapi.responses import Response
 import structlog
@@ -41,7 +41,7 @@ async def get_order(order_id: int, db: AsyncSession = Depends(deps.get_db)):
         raise HTTPException(status_code=404, detail="Order not found")
     return order
 
-@app.post("/orders", response_model=schemas.OrderRead, status_code=201)
+@app.post("/orders", status_code=201)
 @limiter.limit("10/minute")
 async def create_order(request: Request, order: schemas.OrderCreate, db: AsyncSession = Depends(deps.get_db)):
     grpc_client = ProductsGrpcClient()
@@ -52,12 +52,38 @@ async def create_order(request: Request, order: schemas.OrderCreate, db: AsyncSe
         if not product or not hasattr(product, 'price'):
             raise HTTPException(status_code=404, detail=f"Product {p.product_id} not found")
         total_price += product.price * p.quantity
-    db_order = await crud.create_order(db, order, total_price)
-    if not db_order:
+    # Создать заказ и продукты
+    from app.models import Order, OrderProduct
+    db_order = Order(user_id=order.user_id, total_price=total_price)
+    db.add(db_order)
+    await db.flush()
+    for p in order.products:
+        db.add(OrderProduct(order_id=db_order.id, product_id=p.product_id, quantity=p.quantity))
+    try:
+        await db.commit()
+    except Exception:
+        await db.rollback()
         raise HTTPException(status_code=400, detail="Order creation failed")
+    # Получить все OrderProduct для этого заказа
+    from app.models import OrderProduct
+    result = await db.execute(
+        __import__('sqlalchemy').future.select(OrderProduct).where(OrderProduct.order_id == db_order.id)
+    )
+    products = result.scalars().all()
+    # Собрать ответ вручную
+    response = {
+        "id": db_order.id,
+        "user_id": db_order.user_id,
+        "total_price": db_order.total_price,
+        "status": str(db_order.status),
+        "products": [
+            {"id": prod.id, "product_id": prod.product_id, "quantity": prod.quantity}
+            for prod in products
+        ]
+    }
     order_created.inc()
     logger.info("order_created", user_id=order.user_id)
-    return db_order
+    return response
 
 @app.put("/orders/{order_id}/status", response_model=schemas.OrderRead)
 async def update_order_status(order_id: int, status: schemas.OrderStatus, db: AsyncSession = Depends(deps.get_db)):

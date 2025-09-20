@@ -1,5 +1,5 @@
 import grpc
-from products_service.app import products_pb2, products_pb2_grpc
+from . import products_pb2, products_pb2_grpc
 import asyncio
 
 class ProductsGrpcClient:

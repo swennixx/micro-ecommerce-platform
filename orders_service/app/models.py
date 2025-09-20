@@ -25,7 +25,7 @@ class Order(Base):
     total_price = Column(Float, nullable=False)
     status = Column(Enum(OrderStatus), default=OrderStatus.pending)
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
-    products = relationship("OrderProduct", back_populates="order")
+    products = relationship("OrderProduct", back_populates="order", lazy="selectin")
 
 class OrderProduct(Base):
     __tablename__ = "order_products_details"

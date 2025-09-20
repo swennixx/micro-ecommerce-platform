@@ -2,8 +2,8 @@
 from fastapi import FastAPI, Depends, HTTPException, status, Request
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.ext.asyncio import AsyncSession
-from . import models, schemas, crud, deps, auth
-from .database import engine
+from app import models, schemas, crud, deps, auth
+from app.database import engine
 from prometheus_client import Counter, generate_latest, CONTENT_TYPE_LATEST
 from fastapi.responses import Response
 import structlog

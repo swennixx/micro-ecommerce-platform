@@ -15,7 +15,7 @@ services:
     ports:
       - "8001:8000"
     environment:
-      - DATABASE_URL=postgresql://user:password@users_db:5432/users_db
+      - DATABASE_URL=postgresql+asyncpg://user:password@users_db:5432/users_db
     depends_on:
       - users_db
     restart: always
@@ -26,7 +26,7 @@ services:
     ports:
       - "8002:8000"
     environment:
-      - DATABASE_URL=postgresql://user:password@products_db:5432/products_db
+      - DATABASE_URL=postgresql+asyncpg://user:password@products_db:5432/products_db
     depends_on:
       - products_db
     restart: always
@@ -37,7 +37,7 @@ services:
     ports:
       - "8003:8000"
     environment:
-      - DATABASE_URL=postgresql://user:password@orders_db:5432/orders_db
+      - DATABASE_URL=postgresql+asyncpg://user:password@orders_db:5432/orders_db
     depends_on:
       - orders_db
     restart: always
@@ -48,7 +48,7 @@ services:
     ports:
       - "8004:8000"
     environment:
-      - DATABASE_URL=postgresql://user:password@payments_db:5432/payments_db
+      - DATABASE_URL=postgresql+asyncpg://user:password@payments_db:5432/payments_db
     depends_on:
       - payments_db
     restart: always

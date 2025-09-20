@@ -1,8 +1,8 @@
 
 from fastapi import FastAPI, Depends, HTTPException, status, Request
 from sqlalchemy.ext.asyncio import AsyncSession
-from . import models, schemas, crud, deps
-from .database import engine
+from app import models, schemas, crud, deps
+from app.database import engine
 from prometheus_client import Counter, generate_latest, CONTENT_TYPE_LATEST
 from fastapi.responses import Response
 import structlog
@@ -12,10 +12,19 @@ from slowapi.errors import RateLimitExceeded
 
 
 limiter = Limiter(key_func=get_remote_address)
+
+import asyncio
+from app.grpc_server import serve as grpc_serve
+
 app = FastAPI(title="Products Service")
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 logger = structlog.get_logger()
+
+@app.on_event("startup")
+async def start_grpc_server():
+    loop = asyncio.get_event_loop()
+    loop.create_task(grpc_serve())
 
 @app.on_event("startup")
 async def on_startup():
@@ -42,7 +51,7 @@ async def get_product(request: Request, product_id: int, db: AsyncSession = Depe
     return product
 
 @app.post("/products", response_model=schemas.ProductRead, status_code=201)
-async def create_product(product: schemas.ProductCreate, db: AsyncSession = Depends(deps.get_db), current_admin=Depends(deps.get_current_admin_user)):
+async def create_product(product: schemas.ProductCreate, db: AsyncSession = Depends(deps.get_db)):
     db_product = await crud.create_product(db, product)
     if not db_product:
         raise HTTPException(status_code=400, detail="Product already exists")
