@@ -1,0 +1,114 @@
+version: '3.9'
+
+services:
+  gateway_service:
+    build: ./gateway_service
+    container_name: gateway_service
+    ports:
+      - "8080:8080"
+    depends_on:
+      - products_service
+    restart: always
+  users_service:
+    build: ./users_service
+    container_name: users_service
+    ports:
+      - "8001:8000"
+    environment:
+      - DATABASE_URL=postgresql://user:password@users_db:5432/users_db
+    depends_on:
+      - users_db
+    restart: always
+
+  products_service:
+    build: ./products_service
+    container_name: products_service
+    ports:
+      - "8002:8000"
+    environment:
+      - DATABASE_URL=postgresql://user:password@products_db:5432/products_db
+    depends_on:
+      - products_db
+    restart: always
+
+  orders_service:
+    build: ./orders_service
+    container_name: orders_service
+    ports:
+      - "8003:8000"
+    environment:
+      - DATABASE_URL=postgresql://user:password@orders_db:5432/orders_db
+    depends_on:
+      - orders_db
+    restart: always
+
+  payments_service:
+    build: ./payments_service
+    container_name: payments_service
+    ports:
+      - "8004:8000"
+    environment:
+      - DATABASE_URL=postgresql://user:password@payments_db:5432/payments_db
+    depends_on:
+      - payments_db
+    restart: always
+
+  users_db:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: users_db
+    ports:
+      - "5433:5432"
+    restart: always
+
+  products_db:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: products_db
+    ports:
+      - "5434:5432"
+    restart: always
+
+  orders_db:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: orders_db
+    ports:
+      - "5435:5432"
+    restart: always
+
+  payments_db:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: payments_db
+    ports:
+      - "5436:5432"
+    restart: always
+
+  redis:
+    image: redis:7
+    ports:
+      - "6379:6379"
+    restart: always
+
+  prometheus:
+    image: prom/prometheus
+    volumes:
+      - ./docs/prometheus.yml:/etc/prometheus/prometheus.yml
+    ports:
+      - "9090:9090"
+    restart: always
+
+  grafana:
+    image: grafana/grafana
+    ports:
+      - "3000:3000"
+    restart: always
