@@ -12,7 +12,7 @@ def test_register_and_login():
     client = TestClient(app)
     data = {"username": "pytestuser", "email": "pytestuser@example.com", "password": "pytestpass123"}
     r = client.post("/register", json=data)
-    assert r.status_code in (200, 400)  # 400 если уже есть
+    assert r.status_code in (200, 400)
     r = client.post("/login", data={"username": "pytestuser", "password": "pytestpass123"})
     assert r.status_code == 200
     assert "access_token" in r.json()
