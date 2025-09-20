@@ -1,0 +1,32 @@
+@startuml
+!define RECTANGLE class
+RECTANGLE UsersService
+RECTANGLE ProductsService
+RECTANGLE OrdersService
+RECTANGLE PaymentsService
+RECTANGLE PostgreSQL
+RECTANGLE Redis
+RECTANGLE Prometheus
+RECTANGLE Grafana
+RECTANGLE Client
+
+Client --> UsersService : REST /register, /login
+Client --> ProductsService : REST /products
+Client --> OrdersService : REST /orders
+Client --> PaymentsService : REST /payments
+
+UsersService --> PostgreSQL : asyncpg
+ProductsService --> PostgreSQL : asyncpg
+OrdersService --> PostgreSQL : asyncpg
+PaymentsService --> PostgreSQL : asyncpg
+
+ProductsService --> Redis : cache
+OrdersService --> ProductsService : gRPC
+
+UsersService --> Prometheus : metrics
+ProductsService --> Prometheus : metrics
+OrdersService --> Prometheus : metrics
+PaymentsService --> Prometheus : metrics
+
+Prometheus --> Grafana : monitoring
+@enduml
